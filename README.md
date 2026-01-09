@@ -25,7 +25,7 @@ This is a plugin for IDA that implements rich, responsive search functionality t
 
 ## Installation
 
-Go to your **IDA folder**, in the **plugins** folder, and put **IDAFile.py** there.
+Go to your **IDA folder**, in the **plugins** folder, and put **IDAFind.py** there.
 
 ## AI disclaimer
 I put together most of this with Claude. Well, like 80% of it. It was great at early iteration but at some point it was faster for me to start implementing and writing some of the stuff, and handle refactoring. It was kind of really awesome though.
