@@ -4,7 +4,9 @@
 ![Short, GIF demo of IDAFind for non-collapsed presentation](./media/Demo.gif)
 > For a more detailed demo, including shortcut action configuration, please see here:
 > <details>
-> TODO
+> 
+> https://github.com/user-attachments/assets/19bf8f4b-7a7c-4f2b-8c83-6bb99c368fa6
+>
 > </details>
 
 ## What is this?
