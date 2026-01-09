@@ -1,11 +1,14 @@
+import time
+
 import ida_hexrays
 import ida_kernwin
 import ida_lines
 import ida_moves
 import ida_netnode
-from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtCore import QEvent, QObject, Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
+    QApplication,
     QCheckBox,
     QColorDialog,
     QHBoxLayout,
@@ -20,11 +23,11 @@ from PyQt5.QtWidgets import (
 PLUGIN_NAME = "IdaFind"
 PLUGIN_DEBUG = False  # Prints some debug stuff. Not useful for usage.
 
-# Plugin constants (Action)
-PLUGIN_ACTION_NAME = f"{PLUGIN_NAME}:OpenPseudocodeSearch"
-PLUGIN_ACTION_LABEL = "Find in Pseudocode"
-PLUGIN_ACTION_DEFAULT_KEY = "Ctrl+F"
-PLUGIN_ACTION_TOOLTIP = "Key to open the pseudocode search menu."
+# Plugin constants (Action - Open Search)
+PLUGIN_ACTION_OPEN_NAME = f"{PLUGIN_NAME}:OpenPseudocodeSearch"
+PLUGIN_ACTION_OPEN_LABEL = "Find in Pseudocode"
+PLUGIN_ACTION_OPEN_KEY = "Ctrl+F"
+PLUGIN_ACTION_OPEN_TOOLTIP = "Key to open the pseudocode search menu."
 
 # Default highlight color (ABGR format for IDA: 0xAABBGGRR)
 PLUGIN_HIGHLIGHT_COLOR = 0x3300FFFF  # Yellow (R=FF, G=FF, B=00) with alpha=33
@@ -40,6 +43,9 @@ PLUGIN_HIGHLIGHT_HOOKS = None
 
 # Global search dialog instance
 PLUGIN_SEARCH_DIALOG = None
+
+# Timestamp of last Ctrl+F press when dialog was active (for double-tap to close)
+PLUGIN_LAST_HOTKEY_TIME = 0
 
 
 def __plugin_print(id):
@@ -400,7 +406,7 @@ def get_current_match_index(matches, widget):
 
 
 class SearchHighlightHooks(ida_kernwin.UI_Hooks):
-    """UI hooks to highlight search matches in pseudocode."""
+    """UI hooks to highlight search matches in pseudocode and intercept Escape."""
 
     def __init__(self):
         ida_kernwin.UI_Hooks.__init__(self)
@@ -408,6 +414,17 @@ class SearchHighlightHooks(ida_kernwin.UI_Hooks):
         self.func_ea = None
         self.current_line = None  # Line number of the current match
         self.current_col = None  # Column of the current match
+
+    def preprocess_action(self, action_name):
+        """Intercept actions before they execute. Return 1 to block the action."""
+        global PLUGIN_SEARCH_DIALOG
+        # Block IDA's "Return" action (triggered by Escape) when our dialog is visible
+        if action_name == "Return":
+            if PLUGIN_SEARCH_DIALOG is not None and PLUGIN_SEARCH_DIALOG.isVisible():
+                plugin_debug(f"Blocking '{action_name}' action, closing search dialog.")
+                PLUGIN_SEARCH_DIALOG.close()
+                return 1  # Block the action
+        return 0  # Allow the action
 
     def set_highlights(
         self, func_ea, matches, query_len, current_line=None, current_col=None
@@ -451,11 +468,27 @@ class SearchHighlightHooks(ida_kernwin.UI_Hooks):
                             break  # Only one highlight per line needed
 
 
+class EscapeEventFilter(QObject):
+    """Event filter that intercepts Escape key to close the search dialog."""
+
+    def __init__(self, dialog):
+        super().__init__()
+        self.dialog = dialog
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
+            if self.dialog is not None and self.dialog.isVisible():
+                plugin_debug("Escape intercepted by event filter, closing dialog.")
+                self.dialog.close()
+                return True  # Event handled, don't propagate
+        return False  # Let other events pass through
+
+
 class SearchLineEdit(QLineEdit):
-    """QLineEdit that forwards Enter/Escape to parent widget."""
+    """QLineEdit that forwards Enter to parent widget."""
 
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Escape):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             # Forward to parent widget
             self.parent().keyPressEvent(event)
         else:
@@ -469,6 +502,9 @@ class SearchDialog(QWidget):
         super().__init__(parent)
         self.vdui = vdui
         self.widget = widget
+
+        # Event filter to intercept Escape key at application level
+        self.escape_filter = EscapeEventFilter(self)
 
         # Load persistent settings
         settings = load_settings()
@@ -819,8 +855,10 @@ class SearchDialog(QWidget):
             super().keyPressEvent(event)
 
     def showEvent(self, event):
-        """Refresh status when shown."""
+        """Install escape filter and refresh status when shown."""
         super().showEvent(event)
+        # Install event filter at application level to intercept Escape before IDA
+        QApplication.instance().installEventFilter(self.escape_filter)
         self.refresh_status()
 
     def changeEvent(self, event):
@@ -840,8 +878,11 @@ class SearchDialog(QWidget):
                     self.setWindowOpacity(0.8)
 
     def closeEvent(self, event):
-        """Clear highlights when closing."""
+        """Remove escape filter and clear highlights when closing."""
         global PLUGIN_HIGHLIGHT_HOOKS
+
+        # Remove event filter
+        QApplication.instance().removeEventFilter(self.escape_filter)
 
         if PLUGIN_HIGHLIGHT_HOOKS:
             PLUGIN_HIGHLIGHT_HOOKS.clear_highlights()
@@ -851,12 +892,18 @@ class SearchDialog(QWidget):
 
 def show_search_dialog():
     """Show the search dialog for the pseudocode window."""
-    global PLUGIN_SEARCH_DIALOG
+    global PLUGIN_SEARCH_DIALOG, PLUGIN_LAST_HOTKEY_TIME
 
     if PLUGIN_SEARCH_DIALOG is not None:
         if PLUGIN_SEARCH_DIALOG.isActiveWindow():
+            current_time = time.time()
+            if current_time - PLUGIN_LAST_HOTKEY_TIME < 1.0:
+                plugin_debug("Double-tap detected, closing window.")
+                PLUGIN_SEARCH_DIALOG.close()
+                PLUGIN_LAST_HOTKEY_TIME = 0
+                return
             plugin_debug("Window already active.")
-            # I guess refresh status?
+            PLUGIN_LAST_HOTKEY_TIME = current_time
             PLUGIN_SEARCH_DIALOG.refresh_status()
             return
 
@@ -881,7 +928,9 @@ def show_search_dialog():
     PLUGIN_SEARCH_DIALOG.input.selectAll()
 
 
-class HotkeyCallback(ida_kernwin.action_handler_t):
+class OpenSearchCallback(ida_kernwin.action_handler_t):
+    """Callback to open the pseudocode search dialog."""
+
     def __init__(self):
         ida_kernwin.action_handler_t.__init__(self)
 
@@ -889,21 +938,6 @@ class HotkeyCallback(ida_kernwin.action_handler_t):
         show_search_dialog()
         return 1
 
-    # You can implement update(), to inform IDA when:
-    #  * your action is enabled
-    #  * update() should queried again
-    # E.g., returning 'ida_kernwin.AST_ENABLE_FOR_WIDGET' will
-    # tell IDA that this action is available while the
-    # user is in the current widget, and that update()
-    # must be queried again once the user gives focus
-    # to another widget.
-    #
-    # For example, the following update() implementation
-    # will let IDA know that the action is available in
-    # "IDA View-*" views, and that it's not even worth
-    # querying update() anymore until the user has moved
-    # to another view..
-    #
     def update(self, ctx):
         return (
             ida_kernwin.AST_ENABLE_FOR_WIDGET
@@ -912,29 +946,49 @@ class HotkeyCallback(ida_kernwin.action_handler_t):
         )
 
 
-def register_hotkey():
-    """Register Ctrl+F hotkey."""
+class CloseSearchCallback(ida_kernwin.action_handler_t):
+    """Callback to close the pseudocode search dialog."""
+
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        global PLUGIN_SEARCH_DIALOG
+        if PLUGIN_SEARCH_DIALOG is not None:
+            plugin_debug("here!")
+            PLUGIN_SEARCH_DIALOG.close()
+        return 1
+
+    def update(self, ctx):
+        global PLUGIN_SEARCH_DIALOG
+        if PLUGIN_SEARCH_DIALOG is not None and PLUGIN_SEARCH_DIALOG.isActiveWindow():
+            return ida_kernwin.AST_ENABLE_FOR_WIDGET
+        return ida_kernwin.AST_DISABLE_FOR_WIDGET
+
+
+def register_hotkey(action_name, action_label, callback, hotkey, tooltip):
+    """Register a hotkey action."""
     if ida_kernwin.register_action(
         ida_kernwin.action_desc_t(
-            PLUGIN_ACTION_NAME,
-            PLUGIN_ACTION_LABEL,
-            HotkeyCallback(),
-            PLUGIN_ACTION_DEFAULT_KEY,
-            PLUGIN_ACTION_TOOLTIP,
+            action_name,
+            action_label,
+            callback,
+            hotkey,
+            tooltip,
         )
     ):
-        plugin_debug("Registered hotkey action!")
+        plugin_debug(f"Registered hotkey action '{action_name}' ({hotkey})!")
         return True
 
-    plugin_error("Failed to register hotkey action!")
-    unregister_hotkey()
+    plugin_error(f"Failed to register hotkey action '{action_name}' ({hotkey})!")
+    unregister_hotkey(action_name)
     return False
 
 
-def unregister_hotkey():
-    """Unregister the hotkey."""
-    plugin_debug("Unregistering hotkey action!")
-    ida_kernwin.unregister_action(PLUGIN_ACTION_NAME)
+def unregister_hotkey(action_name):
+    """Unregister a hotkey action."""
+    plugin_debug(f"Unregistering hotkey action '{action_name}'!")
+    ida_kernwin.unregister_action(action_name)
 
 
 def init_hooks():
@@ -971,11 +1025,17 @@ def cleanup_search_dialog():
 # Cleanup previous instance if reloading script
 cleanup_hooks()
 cleanup_search_dialog()
-unregister_hotkey()
+unregister_hotkey(PLUGIN_ACTION_OPEN_NAME)
 
 # Load persistent settings on startup
 load_settings()
 
 # Initialize on script load
 init_hooks()
-register_hotkey()
+register_hotkey(
+    PLUGIN_ACTION_OPEN_NAME,
+    PLUGIN_ACTION_OPEN_LABEL,
+    OpenSearchCallback(),
+    PLUGIN_ACTION_OPEN_KEY,
+    PLUGIN_ACTION_OPEN_TOOLTIP,
+)
