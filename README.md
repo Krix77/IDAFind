@@ -26,7 +26,7 @@ This is a plugin for IDA that implements rich, responsive search functionality t
 - Wildcard search: functionally the same as the `-Like` functionality of PowerShell. Most Windows programmers are familiar with it already.
 - Case insensitive search: does not account for character case in matching.
 - **Highlights**: as you type, all the matched lines of your search query (including wildcard search ones) will be highlighted. To help you focus, **the active match (as seen in the search window) pops out, as other matches are dimmed**. You can even pick your preferred color!
-- **Plugin Update checks**: commit `7bf4430816ae1589af1c1bb2794af51d1d96d837` introduced a check to see if you're running the latest version of **IDAFind**, and declared the first stable version of `1.0.0`.
+- **Plugin Update checks**: commit `0a1a9446f64965f4cfd89b65c76920b4823f729b` introduced a check to see if you're running the latest version of **IDAFind**, and declared the first stable version of `1.0.0`.
 
 ## Installation
 
