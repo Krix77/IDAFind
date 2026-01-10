@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
 
 # Plugin constants
 PLUGIN_NAME = "IdaFind"
-PLUGIN_VERSION = "1.0.0"
+PLUGIN_VERSION = "1.0.1"
 PLUGIN_DEBUG = True  # Prints some debug stuff. Not useful for usage.
 
 # Plugin constants (Repository)
@@ -101,7 +101,9 @@ def check_for_updates():
         global PLUGIN_UPDATE_AVAILABLE
         try:
             url = f"{PLUGIN_REPO_RAW_URL}/IDAFind.py"
+            cache_header = None
             with urllib.request.urlopen(url, timeout=5) as response:
+                cache_header = response.getheader("X-Cache")
                 content = response.read().decode("utf-8", errors="ignore")
 
             match = re.search(r'PLUGIN_VERSION\s*=\s*["\']([^"\']+)["\']', content)
@@ -113,8 +115,13 @@ def check_for_updates():
                         f"Update available: {PLUGIN_VERSION} -> {remote_version}. "
                         f"Visit {PLUGIN_REPO_URL}"
                     )
-        except Exception:
+                    if isinstance(cache_header, str) and cache_header.lower() == "hit":
+                        plugin_warn(
+                            "Plugin version check was given cached data, might be inaccurate."
+                        )
+        except Exception as e:
             plugin_warn("Failed version update check...")
+            plugin_warn(e)
             pass  # Silent failure
 
     thread = threading.Thread(target=_check, daemon=True)
