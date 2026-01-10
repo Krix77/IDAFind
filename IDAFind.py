@@ -1,4 +1,7 @@
+import re
+import threading
 import time
+import urllib.request
 
 import ida_hexrays
 import ida_kernwin
@@ -21,7 +24,16 @@ from PyQt5.QtWidgets import (
 
 # Plugin constants
 PLUGIN_NAME = "IdaFind"
-PLUGIN_DEBUG = False  # Prints some debug stuff. Not useful for usage.
+PLUGIN_VERSION = "1.0.0"
+PLUGIN_DEBUG = True  # Prints some debug stuff. Not useful for usage.
+
+# Plugin constants (Repository)
+PLUGIN_REPO = "cristeigabriela/IDAFind"
+PLUGIN_REPO_BRANCH = "main"
+PLUGIN_REPO_URL = f"https://github.com/{PLUGIN_REPO}"
+PLUGIN_REPO_RAW_URL = (
+    f"https://raw.githubusercontent.com/{PLUGIN_REPO}/{PLUGIN_REPO_BRANCH}"
+)
 
 # Plugin constants (Action - Open Search)
 PLUGIN_ACTION_OPEN_NAME = f"{PLUGIN_NAME}:OpenPseudocodeSearch"
@@ -46,6 +58,9 @@ PLUGIN_SEARCH_DIALOG = None
 
 # Timestamp of last Ctrl+F press when dialog was active (for double-tap to close)
 PLUGIN_LAST_HOTKEY_TIME = 0
+
+# Update availability (set by background check)
+PLUGIN_UPDATE_AVAILABLE = None
 
 
 def __plugin_print(id):
@@ -77,6 +92,33 @@ def plugin_error(*args):
     """Error printing utility. Oops."""
     __plugin_print("error")
     print(*args)
+
+
+def check_for_updates():
+    """Check for updates in a background thread. Non-blocking, silent on failure."""
+
+    def _check():
+        global PLUGIN_UPDATE_AVAILABLE
+        try:
+            url = f"{PLUGIN_REPO_RAW_URL}/IDAFind.py"
+            with urllib.request.urlopen(url, timeout=5) as response:
+                content = response.read().decode("utf-8", errors="ignore")
+
+            match = re.search(r'PLUGIN_VERSION\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                remote_version = match.group(1)
+                if remote_version != PLUGIN_VERSION:
+                    PLUGIN_UPDATE_AVAILABLE = remote_version
+                    plugin_info(
+                        f"Update available: {PLUGIN_VERSION} -> {remote_version}. "
+                        f"Visit {PLUGIN_REPO_URL}"
+                    )
+        except Exception:
+            plugin_warn("Failed version update check...")
+            pass  # Silent failure
+
+    thread = threading.Thread(target=_check, daemon=True)
+    thread.start()
 
 
 def load_settings():
@@ -585,6 +627,29 @@ class SearchDialog(QWidget):
         highlight_row.addStretch()
         layout.addLayout(highlight_row)
 
+        # Update notification (only shown if update is available)
+        if PLUGIN_UPDATE_AVAILABLE is not None:
+            update_row = QHBoxLayout()
+            current_version_label = QLabel(f"current ver: {PLUGIN_VERSION}")
+            current_version_label.setStyleSheet(
+                "background-color: black; color: white;"
+            )
+            update_row.addWidget(current_version_label)
+
+            update_row.addStretch(1)
+
+            latest_version_label = QLabel(f"latest ver: {PLUGIN_UPDATE_AVAILABLE}")
+            latest_version_label.setStyleSheet("background-color: white; color: black;")
+            update_row.addWidget(latest_version_label)
+            layout.addLayout(update_row)
+
+            update_label2 = QLabel("you can update at:")
+            layout.addWidget(update_label2)
+
+            update_link = QLabel(f'<a href="{PLUGIN_REPO_URL}">{PLUGIN_REPO_URL}</a>')
+            update_link.setOpenExternalLinks(True)
+            layout.addWidget(update_link)
+
         self.setLayout(layout)
 
     def pick_color(self):
@@ -1039,3 +1104,6 @@ register_hotkey(
     PLUGIN_ACTION_OPEN_KEY,
     PLUGIN_ACTION_OPEN_TOOLTIP,
 )
+
+# Check for updates in background
+check_for_updates()
